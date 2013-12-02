@@ -168,6 +168,12 @@ for X in L do <s> end
 # GRAMATIKKER OG PARSING
 #
 
+# Rekursiv nedstingningsparsing
+Gjør om
+    <name list> ::= <name> | <name> ',' <name list>
+til
+    <name list> ::= <name> [, <name list>]
+Dette er fordi vi ikke kan ha en regel som begge starter med <name>. Vi venstrefaktoriserer den.
 
 #
 # Gramatikkparsere
@@ -229,6 +235,45 @@ end
       
 
 {Browse {Eval o(n(t) o(t f))}}  
+
+# Rekursiv parser for SQL
+are
+fun {Expr In ?Out}
+   case In of nm(N)|'='|vl(V)|Rest then
+      Out = Rest
+      equal(N V)
+   end
+end
+
+fun{NameList In ?Out}
+   case In of nm(N)|','|R then
+      nm(N)|{NameList R Out}
+   [] nm(N)|R then
+      Out = R
+      nm(N)
+   end
+end
+
+fun{Select In ?Out}
+   NL
+   NLr
+   NL2
+   NL2r
+   E
+   ER
+in
+   case In of 'select'|T then
+      NL = {NameList T NLr}
+   end
+   case NLr of 'from'|T then
+      NL2 = {NameList T NL2r}
+   end
+   case NL2r of 'where'|T then
+      E = {Expr T ER}
+   end
+   Out = ER
+   sel(NL NL2 E)
+end
 
 #
 # ANNEN NYTTIG KODE

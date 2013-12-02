@@ -1,0 +1,152 @@
+#
+# UTVIDELSER AV DEN DEKLARATIVE MODELLEN
+#
+
+# The declerative kernel language
+
+Innfører følgende statements:
+    skip                                        Empty statement
+    <s1> <s2>                                   Statement sequence
+    local <x> in <s> end                        Variable creation
+    <x1> = <x2>                                 Variable-variable binding
+    <x> = <v>                                   Value creationg
+    if <x> then <s1> else <s2> end              Conditional
+    case <x> of <pat> then <s1> else <s2> end   Pattern matching
+    { <x> <y1> ... <yn> }                       Procedure application
+
+
+# The declarative computation model with exceptions
+
+Innfører følgende statements:
+    try <s1> catch <x> then <s2> end            Exception context
+    raise <x> end                               Raise exception
+
+
+# The declarative model with secure types
+
+Innfører følgende statements:
+    {NewName <x>}                               Name creation
+    <y>=!!<x>                                   Read-only view
+
+# The concurrent data-driven declarative model
+
+Innfører følgende statements:
+    thread <s> end                              Thread creation
+
+
+# The concurrent demand-driven declarative model
+
+Utvider "The concurrent data-driven declarative model" med følgende statements:
+    {ByNeed <x> <y>}                            Trigger creation
+
+
+# The message-passing concurrent model
+Innfører følgende statements:
+    {NewPort <y> <x>}                           Port creation
+    {Send <x> <y>}                              Port send
+
+# The declarative model with explicit state
+Innfører følgende statements:
+    {NewCell <x> <y>}
+    {Exchange <x> <y> <z>}
+Beholder ikke concurrency.
+
+# The shared-state concurrent model
+Beholder elementer fra "The declarative model with explicit state" og "The concurrent data-driven declarative model"
+
+# The relational computation model
+Innfører to nye statements:
+    chocie - Ikke-deterministisk. Grupperer sammen et sett med alternativer.
+    fail - Alternativet er feil. Denne blir kalt implisitt ved unifikasjonsfeil.
+
+#
+# PARAMETRE
+#
+
+En variabel funnet i en funksjonsdefinisjon. Formal parameters refererer til variablene, actual parameters til verdiene.
+
+# Parameter passing
+
+# Call by reference: Prosedyren har tilgang til variablen som aktuelt parameter, man kan binde variablen i prosedyren. Standart i oz.
+# Call by variable: Spesialtilfelle av ovenfor. Kopierer referansen og bruker denne som et alias til den aktuelle variablen.
+# Call by value: Verdien kopierers, prosedyren kan ikke endre eller binde parameteret.
+# Call by value-result: Får en lokal kopi, men overskriver kopien når prosedyren er ferdig. Med andre ord
+# Call by name: Det blir sendt inn en thunk til metoden, et funksjonskall som returnerer verdien. Lat utførelse uten memoisering
+# Call by need: Thunkene blir lagret én gang. Lat evaluering med memoisering.
+
+
+#
+# ANNET
+#
+
+# Statement og expression
+Et statement er det samme som en setning. Dette er "a complete unit of execution".
+En expression er et oppbygning av variable og funksjonskall som evaluerer til en enkelt verdi.
+
+# SolveOne og SolveAll
+SolveOne regner ut den late listen med {Solve $}, og returnerer første resultat (hvis det finnes).
+SolveAll regner ut den late listen med {Solve $}, og kjører {TouchAll $} på listen, en funksjon som tvinger alle elementene til å bli generert.
+
+# Closure
+En closure er en funksjon sammen med tilhørende miljø. Dette er ulikt en funksjonspeker, som bare peker til funksjonen. En funksjon i en closure har da mulighet til å nå eksterne variable uten å være i nærheten av sit leksikalske skop.
+
+#
+# Gramatikkparsere
+#
+
+# Relational boolean grammar parser
+\insert 'Solve.oz'
+
+declare
+fun {Parse Tokens}
+   fun {Expression Before After}
+      case After of [X] then
+	 % Try to unify Before with nil to see that After is the only element left.
+	 Before = nil
+	 % Return X, as its the only element left
+	 X
+      [] H|T then
+	 choice
+	    % Try to match it with a
+	    H = 'a'
+	    a({Expression nil Before} {Expression nil T})
+	 []
+	    % Try to match it with o
+	    H = 'o'
+	    o({Expression nil Before} {Expression nil T})
+	 []
+	    % Try to match it with n
+	    H = 'n'
+	    n({Expression nil T})
+	 []
+	    % Or we could just try to send it away
+	    {Expression {Append Before [H]} T}
+	 end
+      else
+	 % No more elements, obviously not going to lead anywhere.
+	 fail
+      end
+      
+   end
+in
+   {SolveAll fun {$} {Expression nil Tokens} end}
+end
+
+fun {Eval ParseTree}
+   case ParseTree of a(Exp1 Exp2) then
+      {Eval Exp1} andthen {Eval Exp2}
+   [] o(Exp1 Exp2) then
+      {Eval Exp1} orelse {Eval Exp2}
+   [] n(Exp) then
+      if {Eval Exp} then false else true end
+   [] f then
+      false
+   [] t then
+      true
+   end
+   
+end
+%   case ParseTree of a(Exp1 Exp2) then
+      
+
+{Browse {Eval o(n(t) o(t f))}}  

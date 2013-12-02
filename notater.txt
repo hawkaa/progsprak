@@ -59,6 +59,28 @@ Innfører følgende statements:
 Utvider "The concurrent data-driven declarative model" med følgende statements:
     {ByNeed <x> <y>}                            Trigger creation
 
+Utvider eksekveringstilstand:
+    Legger til "trigger store" \tau, slik at vi får (MST, \sigma, \tau).
+
+Semantikk
+    
+    trigger creation:
+        ({ByNeed <x> <y>}, E)
+        - Hvis E(<y>) er ubestemt, legg til trigger trig(E(<x>), E(<y>)) i \tau.
+        - Hvis E(<y>) er bestemt, legg til en ny tråd med initielt statement ({<x> <y>}, E)
+
+    trigger activation:
+        Hvis \tau inneholder trig(x, y) og man trenger y, med andre ord det er en tråd som er suspended som venter på at y skal bli bestemt, eller noen som forsøker å binde y, gjør følgende:
+        - Fjern triggeren fra \tau.
+        - Lag en ny tråd med start-tilstand ({<x> <y>}, {<x> -> x, <y> -> y})
+
+
+Annet:
+    
+    {ByNeed P Y} gjør det samme som 'thread {P Y} end', bortsett fra at thread alltid vil kjøre (til slutt), men ByNeed kjører når Y trengs.
+
+    Lat utførelse forutsetter samtidighet, siden den late funksjonen utføres i en egen tråd.
+
 
 # The message-passing concurrent model
 Innfører følgende statements:
@@ -84,6 +106,7 @@ Innfører to nye statements:
 #
 
 # Lazy execution
+Programmeringsparadigme som sier at beregning ikke gjøres før det er nødvendig. Tillater strømmer og rekursive strukturer, gjør det enklere med modularisering og synkronisering.
 
 #
 # PARAMETRE
@@ -111,7 +134,8 @@ En expression er et oppbygning av variable og funksjonskall som evaluerer til en
 
 # SolveOne og SolveAll
 SolveOne regner ut den late listen med {Solve $}, og returnerer første resultat (hvis det finnes).
-SolveAll regner ut den late listen med {Solve $}, og kjører {TouchAll $} på listen, en funksjon som tvinger alle elementene til å bli generert.
+SolveAll regner ut den late listen med {Solve $}, og kjører {TouchAll $} på listen, en funksjon som tvinger alle elementene til å bli generert. Når man kaller SolveAll må man definere en ny funksjon, som dette:
+    {SolveAll fun {$} {MyRelativeFunction X Y ... Z} end}
 
 # Closure
 En closure er en funksjon sammen med tilhørende miljø. Dette er ulikt en funksjonspeker, som bare peker til funksjonen. En funksjon i en closure har da mulighet til å nå eksterne variable uten å være i nærheten av sit leksikalske skop.
@@ -129,6 +153,21 @@ En closure er en funksjon sammen med tilhørende miljø. Dette er ulikt en funks
         3 Y = 2
         4 end
     I løpet av kjøretiden her vil X og Y bindes, først til hverandre (delvis bundede), så til tallet 2.
+
+#
+# NYTTIGE TING I OZ
+# 
+
+# For-løkke
+for I in A..B;S do <s> end
+
+#Foreach-løkke
+for X in L do <s> end
+
+#
+# GRAMATIKKER OG PARSING
+#
+
 
 #
 # Gramatikkparsere
@@ -190,3 +229,20 @@ end
       
 
 {Browse {Eval o(n(t) o(t f))}}  
+
+#
+# ANNEN NYTTIG KODE
+#
+
+#Velger ett element fra en liste og returnerer en tuppel med element#resten_av_liste
+{PickkOneR L}
+   case L of [X] then
+      X#nil
+   [] H|T then
+      choice
+     H#T
+      [] X#L = {PickOneR T} in
+     X#{Append [H] L}
+      end
+   end    
+end

@@ -22,6 +22,26 @@ Innfører følgende statements:
     raise <x> end                               Raise exception
 
 
+Semantikk:
+    
+    try:
+        (try <s1> catch <x> then <s2> end, E)
+        - Dytt (catch <x> then <s2> end, E)
+        - Dytt (<s1>, E)
+
+    raise:
+        (raise <x> end, E)
+        - Popp elementer til du finner catch. Hvis du ikke finner, stopp eksekvering med feilmelding: "Uncaught exception"
+        - La (catch <y> then <s> end, Ec)
+        - Dytt (<s>, Ec + {<y> -> E(<x>)})
+
+    catch:
+        (catch <x> then <s> end, E)
+        - Popp av stakken
+
+Annet:
+    Dersom denne modellen brukes sammen med concurrency, er det fare for at man får en unifikasjonsfeil som IKKE får programmet til å stoppe. Programmet blir derfor ikke-deterministisk, og derfor ikke deklarativt.
+
 # The declarative model with secure types
 
 Innfører følgende statements:
@@ -60,6 +80,12 @@ Innfører to nye statements:
     fail - Alternativet er feil. Denne blir kalt implisitt ved unifikasjonsfeil.
 
 #
+# DECLARATIVE CONCURRENCY
+#
+
+# Lazy execution
+
+#
 # PARAMETRE
 #
 
@@ -89,6 +115,20 @@ SolveAll regner ut den late listen med {Solve $}, og kjører {TouchAll $} på li
 
 # Closure
 En closure er en funksjon sammen med tilhørende miljø. Dette er ulikt en funksjonspeker, som bare peker til funksjonen. En funksjon i en closure har da mulighet til å nå eksterne variable uten å være i nærheten av sit leksikalske skop.
+
+# Bundede og ubundede variable
+    I et leksikalsk skop er X bundet i denne setningen:
+        local X
+            X = 1
+        end
+    I et leksikalsk skop er X ubundet i denne setningen:
+        X = 1
+    I et dynamisk skop har vi følgende eksempel:
+        1 local X Y in
+        2 X = Y
+        3 Y = 2
+        4 end
+    I løpet av kjøretiden her vil X og Y bindes, først til hverandre (delvis bundede), så til tallet 2.
 
 #
 # Gramatikkparsere

@@ -14,6 +14,20 @@ Innfører følgende statements:
     case <x> of <pat> then <s1> else <s2> end   Pattern matching
     { <x> <y1> ... <yn> }                       Procedure application
 
+Eksekveringstilstand:
+    DSKL definerer en abstrakt maskin.
+
+    Single-assigment store (\sigma):
+        Delt opp i variable som er like men ubundet og varibale som er knyttet til en verdi.
+    Environment:
+        Mapping fra variabelidentifikatorer til verdier i single-assigment store.
+    Semantisk setning:
+        (<s>, E), setning med tilhørende miljø.
+    Execution state:
+        (ST, \sigma) Stack ST med tilhørende single-assignment store.
+
+
+
 
 # The declarative computation model with exceptions
 
@@ -73,6 +87,7 @@ Semantikk
         Hvis \tau inneholder trig(x, y) og man trenger y, med andre ord det er en tråd som er suspended som venter på at y skal bli bestemt, eller noen som forsøker å binde y, gjør følgende:
         - Fjern triggeren fra \tau.
         - Lag en ny tråd med start-tilstand ({<x> <y>}, {<x> -> x, <y> -> y})
+            
 
 
 Annet:
@@ -102,8 +117,41 @@ Innfører to nye statements:
     fail - Alternativet er feil. Denne blir kalt implisitt ved unifikasjonsfeil.
 
 #
+# DECLARATIVE COMPUTATION MODEL
+#
+
+# Deklarativ programenhet er:
+    Stateless.
+    Independent.
+    Deterministic.
+
+# Observational declarativity
+    Hvis mellomfjeset til en komponent oppfører seg deklarativt, har vi observational declarativity. Det kan godt hende den opererer med ikke-deklarative mekanikker intern. Med andre ord, all bruk av enheten vil gi samme output for gitt input.
+
+
+#
+# Declarative Programming Techniques
+#
+
+# Higher order programming
+Definisjon: Å kunne bruke funksjoner som første-klasse objekter/verdier.
+
+Fire operasjoner som ligger under høyere-ordens-programmering
+    1. Procedural abstraction. Muligheten til å konvertere et hvilken som helst statement inn i en prosedyreverdi.
+    2. Genericity. Kunne sende prosedyreverdier som parametre til en funksjon.
+    3. Instantiation. Kunne returnere en prosedyreverdi fra et prosedyrekall
+    4. Emdebbing. Putte prosedyreverdier i datastrukturer.
+
+#
 # DECLARATIVE CONCURRENCY
 #
+
+# Kan dette fortsatt være deklarativt?
+Ja, dataflytvariable i Oz sørger for at verdier alltid bindes til samme verdi, eller så får vi unifikasjonsfeil som terminerer programmet. Verdier kan hende at blir bundet i ulik rekkefølge, men dette har ikke noe å si på beregnningen.
+
+Man kan også si nei, fordi med concurrency er ikke programmet lenger deklarativt i individuelle deler, bare observational declarative. Det kan hende at et prosedyrekall får ubundede variable én gang, bundede en annen gang.
+
+
 
 # Lazy execution
 Programmeringsparadigme som sier at beregning ikke gjøres før det er nødvendig. Tillater strømmer og rekursive strukturer, gjør det enklere med modularisering og synkronisering.
@@ -139,6 +187,43 @@ SolveAll regner ut den late listen med {Solve $}, og kjører {TouchAll $} på li
 
 # Closure
 En closure er en funksjon sammen med tilhørende miljø. Dette er ulikt en funksjonspeker, som bare peker til funksjonen. En funksjon i en closure har da mulighet til å nå eksterne variable uten å være i nærheten av sit leksikalske skop.
+
+# Syntax
+En syntaks forklarer strukturen i et språk, gjerne uttrykt ved hjelp av en gramatikk. Det bestemmer hvordan tokens kan passe sammen for å lage et program (makrosyntaks) og hvorda en token kan bli bygd opp (mikrosyntaks)
+
+# Semantikk
+Semantikk bestemmer hvordan elementene i syntakser skal bli forstått hva angår programeksekvering.
+
+# Linguistic abstraction
+Dette er både en abstraksjon og et tillegg til språkets syntax. Erkeekspmpelet på dette er en å gå fra prosedyrekall til funksjonskall. Først legger vi til i syntaksen:
+    
+    <expression> ::= fun '{' $ { <id> }* '}' [<statement] <expression> end
+    <expression> ::= '{' <id> {<id>}* '}'
+
+Så må vi forklare hvordan vi oversetter fra den ene til den andre
+    
+    Foo = fun {$ P1 P2 ... Pn} <statement> <expression> end
+    Bar = {Foo A1 A2 ... An}
+
+oversettes til:
+    Foo = proc {$ P1 P2 ... Pn ?Ret} <statement> Ret=<expression> end
+    {Foo A1 A2 ... An Bar}.
+
+
+# Syntactic sugar
+Mye likt som Linguistic Abstraction, men gir ikke en ny abstraksjon, bare gjør programmet mer lesbart og kortfattelig. Erkeeksempel her er flere variable i Local:
+<statement> ::= local {<id>}* in <statement> end
+
+Så må vi få til oversettingen:
+local X1 ... Xn in <statement> end
+blir til
+local X1 in
+    ...
+        local XN in
+            <statement>
+        end
+end
+
 
 # Bundede og ubundede variable
     I et leksikalsk skop er X bundet i denne setningen:
